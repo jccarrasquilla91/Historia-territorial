@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Madrid, Cundinamarca — línea de tiempo territorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E4;
+    --paper-dark:#EDE6D3;
+    --ink:#1c1c1c;
+    --red:#c8372a;
+    --red-dark:#9c281e;
+    --orange:#eb9a34;
+    --green:#7fb23a;
+    --navy:#1B3A5C;
+    --purple:#8a3f9c;
+    --pink:#c0446b;
+    --teal:#2f8fae;
+    --olive:#a3791f;
+    --shadow: rgba(28,28,28,0.18);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper-dark);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(0,0,0,0.02) 0, transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(0,0,0,0.02) 0, transparent 40%);
+    font-family:'Work Sans', sans-serif;
+    color:var(--ink);
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    max-width:1000px;
+    margin:0 auto;
+    padding:56px 28px 24px;
+  }
+  .eyebrow{
+    font-family:'Kalam', cursive;
+    font-size:19px;
+    color:var(--red);
+    transform:rotate(-1deg);
+    display:inline-block;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Kalam', cursive;
+    font-weight:700;
+    font-size:clamp(34px,5vw,54px);
+    line-height:1.05;
+    margin:0 0 14px;
+    color:var(--navy);
+  }
+  header p{
+    font-size:16px;
+    line-height:1.6;
+    max-width:620px;
+    color:#444;
+    margin:0 0 8px;
+  }
+  .howto{
+    font-size:14px;
+    color:#6b6b5f;
+    font-style:italic;
+    margin-top:18px;
+  }
+
+  /* ---------- Legend ---------- */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px 22px;
+    margin:22px 0 6px;
+    padding:14px 18px;
+    background:var(--paper);
+    border:1.5px solid #ddd4b8;
+    border-radius:4px;
+    max-width:720px;
+  }
+  .legend span{
+    font-size:12.5px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#333;
+  }
+  .legend i{
+    width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;
+  }
+
+  /* ---------- Strip / hojas wrapper ---------- */
+  .strip-outer{
+    position:relative;
+    padding:30px 0 90px;
+    overflow-x:auto;
+  }
+  .strip{
+    display:flex;
+    width:max-content;
+    min-width:100%;
+    padding:0 24px;
+    gap:0;
+  }
+
+  .hoja{
+    position:relative;
+    width:420px;
+    flex:none;
+    background:var(--paper);
+    margin:0 -1px;
+    padding:34px 26px 28px;
+    box-shadow: 2px 0 6px var(--shadow);
+  }
+  .hoja:nth-child(odd){ transform: rotate(-0.35deg); }
+  .hoja:nth-child(even){ transform: rotate(0.35deg); }
+
+  /* jagged hand-drawn edges via clip-path, alternating per hoja */
+  .hoja.jag-a{ clip-path: polygon(0% 2%, 3% 0%, 100% 1%, 99% 4%, 100% 97%, 97% 100%, 2% 99%, 0% 96%); }
+  .hoja.jag-b{ clip-path: polygon(1% 0%, 100% 2%, 98% 0%, 100% 3%, 99% 98%, 100% 100%, 0% 98%, 2% 100%); }
+
+  .hoja + .hoja{ border-left: 3px solid var(--ink); }
+
+  .hoja-tab{
+    position:absolute;
+    top:-16px; right:18px;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Kalam', cursive;
+    font-size:14px;
+    padding:6px 14px 5px;
+    border-radius:3px 3px 0 0;
+    cursor:pointer;
+    user-select:none;
+    box-shadow:0 -1px 0 rgba(0,0,0,.2);
+  }
+  .hoja-tab:hover{ background:var(--red-dark); }
+  .hoja-tab:after{
+    content:"clic para abrir todo ↕";
+    display:none;
+    position:absolute;
+    top:110%; right:0;
+    font-family:'Work Sans',sans-serif;
+    font-size:10.5px;
+    color:#8a8a7a;
+    white-space:nowrap;
+  }
+  .hoja-tab:hover:after{ display:block; }
+
+  .hoja-title{
+    font-family:'Kalam', cursive;
+    font-size:22px;
+    color:var(--navy);
+    margin:6px 0 18px;
+  }
+
+  /* ---------- Spine (wave of nodes) ---------- */
+  .spine{
+    position:relative;
+    height:300px;
+  }
+  .node{
+    position:absolute;
+    width:160px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    cursor:pointer;
+  }
+  .dot{
+    width:22px;height:22px;border-radius:50%;
+    background:var(--red);
+    border:3px solid var(--paper);
+    box-shadow:0 0 0 2px var(--red);
+    margin-bottom:8px;
+    transition:transform .18s ease;
+    flex:none;
+  }
+  .node:hover .dot{ transform:scale(1.18); }
+  .node.open .dot{ background:var(--red-dark); }
+
+  .node.milestone .dot{ border-radius:4px; transform:rotate(45deg); background:var(--purple); box-shadow:0 0 0 2px var(--purple); }
+  .node.milestone:hover .dot{ transform:rotate(45deg) scale(1.18); }
+  .node.finale .dot{
+    background:var(--olive); box-shadow:0 0 0 2px var(--olive);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    border-radius:0; border:none; width:26px;height:26px;
+  }
+
+  .date-tag{
+    font-family:'Kalam', cursive;
+    font-size:13.5px;
+    color:#333;
+    margin-bottom:3px;
+  }
+  .orange-label{
+    font-size:12.5px;
+    font-weight:600;
+    line-height:1.3;
+    padding:1px 3px;
+    display:inline;
+    background-image:linear-gradient(180deg, transparent 55%, rgba(235,154,52,.55) 55%);
+  }
+  .blob{
+    width:56px; height:40px;
+    margin-top:8px;
+    border:2.5px solid var(--green);
+    background:rgba(127,178,58,.10);
+    border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
+  }
+
+  /* ---------- Drawers ---------- */
+  .drawers{ position:relative; }
+  .drawer{
+    max-height:0;
+    overflow:hidden;
+    transform-origin:top center;
+    transform: rotateX(-6deg);
+    opacity:0;
+    transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s ease, transform .45s cubic-bezier(.4,0,.2,1), padding .3s ease, margin .3s ease;
+    border-top:0 solid var(--ink);
+  }
+  .drawer.open{
+    max-height:900px;
+    opacity:1;
+    transform: rotateX(0deg);
+    border-top:2px dashed #cfc6a8;
+    padding-top:18px;
+    margin-top:6px;
+  }
+  .drawer-inner{ padding-bottom:6px; }
+  .drawer h4{
+    font-family:'Kalam', cursive;
+    font-size:19px;
+    color:var(--navy);
+    margin:0 0 10px;
+  }
+  .tag-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .tag{
+    font-size:10.5px;
+    padding:2px 8px;
+    border-radius:9px;
+    color:#fff;
+    white-space:nowrap;
+  }
+  .drawer ul{ margin:0 0 12px; padding-left:18px; }
+  .drawer li{ font-size:13.5px; line-height:1.55; margin-bottom:6px; color:#333; }
+  .drawer li b{ color:var(--ink); }
+
+  .media-row{ display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start; }
+  .media-placeholder{
+    flex:none;
+    width:150px; height:104px;
+    border:2px solid var(--green);
+    background:repeating-linear-gradient(135deg, rgba(127,178,58,.10) 0 8px, transparent 8px 16px);
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    font-size:10.5px;
+    color:#5a7a2e;
+    padding:6px;
+    border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
+  }
+  .note{
+    font-size:12.5px; color:#6b6b5f; font-style:italic; flex:1; min-width:180px;
+  }
+
+  /* ---------- Footer / cierre banner ---------- */
+  .cierre-banner{
+    max-width:1000px;
+    margin:0 auto 60px;
+    padding:0 28px;
+  }
+  .cierre-card{
+    background:var(--paper);
+    border:2px dashed var(--olive);
+    border-radius:4px;
+    padding:26px 28px;
+  }
+  .cierre-card h3{
+    font-family:'Kalam', cursive;
+    font-size:22px;
+    color:var(--olive);
+    margin:0 0 10px;
+  }
+  .cierre-card p{ font-size:14px; line-height:1.65; color:#333; margin:0 0 10px; }
+  .cierre-card p:last-child{ margin-bottom:0; font-weight:600; }
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:#8a8a7a;
+    padding:20px 28px 50px;
+  }
+
+  @media (max-width:640px){
+    .hoja{ width:300px; padding:28px 18px 22px; }
+    .node{ width:120px; }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .drawer, .dot{ transition:none; }
+  }
+
+  /* Focus visibility */
+  .node:focus-visible .dot, .hoja-tab:focus-visible{
+    outline:3px solid var(--teal);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="eyebrow">línea de tiempo territorial — frizo interactivo</span>
+  <h1>Madrid, Cundinamarca</h1>
+  <p>Configuración histórica y organización del espacio, del periodo Herrera al presente. Cada hoja de esta tira es un tramo del tiempo; el hilo rojo conecta los momentos; lo verde son fotos o mapas y lo naranja son notas cortas.</p>
+  <p class="howto">Toca un punto del hilo para desplegar ese momento. Toca la pestaña negra en la esquina de una hoja para abrir o cerrar todos sus momentos a la vez.</p>
+
+  <div class="legend">
+    <span><i style="background:#3fa6c9"></i>Localización y geografía</span>
+    <span><i style="background:#8a3f9c"></i>Toponimia</span>
+    <span><i style="background:#1B3A5C"></i>Jurisdicción / político-administrativo</span>
+    <span><i style="background:#a3791f"></i>Actividades productivas</span>
+    <span><i style="background:#c0446b"></i>Aspectos socioculturales</span>
+  </div>
+</header>
+
+<div class="strip-outer">
+  <div class="strip" id="strip"></div>
+  <svg id="wire" style="position:absolute; top:0; left:0; pointer-events:none; overflow:visible;" width="1" height="1">
+    <path id="wire-path" d="" fill="none" stroke="#c8372a" stroke-width="4" stroke-linecap="round" opacity="0.92"/>
+  </svg>
+</div>
+
+<div class="cierre-banner">
+  <div class="cierre-card">
+    <h3>Cierre — dos escalas, un mismo gesto (asimétrico)</h3>
+    <p>La base de luminaria en forma de cofre, en El Tesoro, sigue en pie por accidente: nadie la protegió, simplemente resultó más difícil de arrancar que la luminaria que sí se llevaron. Totachagua, en cambio, necesitaba algo que un objeto no necesita: voluntad política sostenida — y esa voluntad se apagó después de un solo periodo de alcalde, mientras las administraciones siguientes sostuvieron sin interrupción el Festival de las Flores.</p>
+    <p>Esa continuidad no es casualidad: es la floricultura —motor económico del municipio desde los años 70— la que decide, en la práctica, qué versión de la identidad de Madrid merece calendario fijo y cuál puede apagarse sin costo político.</p>
+    <p>Si la identidad que se sostiene en el calendario oficial es la que coincide con el interés económico dominante, ¿qué lugar institucional le queda a la memoria que no factura?</p>
+  </div>
+</div>
+
+<footer>
+  Elaborado por Juan Camilo Carrasquilla · MPGT, Universidad de La Salle · basado en Landa (2020), "Una aproximación a la historiografía urbana"
+</footer>
+
+<script>
+/* ============================================================
+   DATOS — edita este arreglo para actualizar el contenido.
+   category: 'localizacion' | 'toponimia' | 'jurisdiccion' | 'productivo' | 'sociocultural'
+   ============================================================ */
+const TAG_COLORS = {
+  localizacion:  '#3fa6c9',
+  toponimia:     '#8a3f9c',
+  jurisdiccion:  '#1B3A5C',
+  productivo:    '#a3791f',
+  sociocultural: '#c0446b'
+};
+const TAG_LABELS = {
+  localizacion:  'Localización',
+  toponimia:     'Toponimia',
+  jurisdiccion:  'Jurisdicción',
+  productivo:    'Productivo',
+  sociocultural: 'Sociocultural'
+};
+
+const hojas = [
+  {
+    title: "1536 y antes",
+    nodes: [
+      {
+        id:'p1', type:'node', top: 66, left: 6,
+        date:'ca. 2700 a.C. – 1536 d.C.', label:'Prehispánico',
+        summary:'Tibaytatá, junto a la Laguna de la Herrera',
+        bullets:[
+          {tag:'localizacion', text:'Asentamiento ritual-alfarero junto a la <b>Laguna de la Herrera</b> (periodo Herrera).'},
+          {tag:'toponimia', text:'El territorio se conoce como <b>Tibaytatá</b> — "labranza del capitán que está a la mano".'},
+          {tag:'jurisdiccion', text:'Organización por <b>cacicazgo muisca</b>.'},
+          {tag:'productivo', text:'Labranza de maíz y pesca — Chugua era el "pescadero" de la laguna.'},
+          {tag:'sociocultural', text:'Ritualidad agroalfarera asociada al cuerpo de agua.'}
+        ],
+        media:'Laguna de la Herrera — foto/mapa pendiente'
+      },
+      {
+        id:'p2', type:'node', top: 14, left: 52,
+        date:'1536 – 1594', label:'Encomienda',
+        summary:'Serrezuela, sobre el Camino Real',
+        bullets:[
+          {tag:'jurisdiccion', text:'1536: llegada española, desarticulación de la sociedad muisca.'},
+          {tag:'jurisdiccion', text:'1559: <b>encomienda de Serrezuela</b>, fundada por Alonso Díaz.'},
+          {tag:'toponimia', text:'Nombre <b>Serrezuela</b> (por el parecido con las sierras); el antecedente indígena es referido como Sugasuca.'},
+          {tag:'localizacion', text:'Ubicada en el <b>Camino Real Santafé – río Magdalena</b>.'},
+          {tag:'productivo', text:'Primeras haciendas coloniales; resguardo indígena adjudicado en 1593-94.'}
+        ],
+        media:'Camino Real / traza colonial — foto/mapa pendiente'
+      }
+    ]
+  },
+  {
+    title: "1774 – 1976",
+    nodes: [
+      {
+        id:'p3', type:'node', top: 62, left: 6,
+        date:'1774 – 1837', label:'Extinción y ruptura',
+        summary:'El pueblo indígena se declara extinto',
+        bullets:[
+          {tag:'jurisdiccion', text:'1774-75: Real Cédula de reorganización de pueblos de indios.'},
+          {tag:'jurisdiccion', text:'El fiscal Moreno y Escandón <b>decreta la extinción del pueblo</b> de Serrezuela por despoblamiento.'},
+          {tag:'jurisdiccion', text:'1837: división del resguardo, ya en la República.'},
+          {tag:'productivo', text:'Se consolida la <b>gran propiedad hacendataria</b> — el mismo patrón que dos siglos después habilita la escala industrial de la floricultura.'}
+        ],
+        media:'Acta / mapa del resguardo — pendiente'
+      },
+      {
+        id:'p4', type:'milestone', top: 10, left: 54,
+        date:'1875 – 1976', label:'Nombres en disputa',
+        summary:'Cuatro cambios de nombre en un siglo',
+        bullets:[
+          {tag:'toponimia', text:'<b>1875:</b> Madrid (Ley 14, en memoria de Pedro Fernández Madrid).'},
+          {tag:'toponimia', text:'<b>1920:</b> vuelve Serrezuela (Ley 5, nombres históricos).'},
+          {tag:'toponimia', text:'<b>1973:</b> Serrezuela otra vez, por petición vecinal.'},
+          {tag:'toponimia', text:'<b>1976:</b> Madrid definitivo (Decreto 14).'}
+        ],
+        media:'Actas de renombramiento — pendiente'
+      }
+    ]
+  },
+  {
+    title: "1924 – hoy",
+    nodes: [
+      {
+        id:'p5', type:'node', top: 64, left: 6,
+        date:'1924 – 2006', label:'Modernización e infraestructura',
+        summary:'De escuela de agronomía a base aérea',
+        bullets:[
+          {tag:'productivo', text:'1924: <b>Escuela Militar de Aviación</b> (hoy CAMAN), sobre los predios de la antigua Escuela de Agronomía.'},
+          {tag:'sociocultural', text:'1928: aterrizaje de <b>Charles Lindbergh</b>, recibido por más de 10.000 personas.'},
+          {tag:'jurisdiccion', text:'1955: Base Arsenal · hacia 1960: Comando Aéreo de Mantenimiento.'},
+          {tag:'jurisdiccion', text:'2000 / 2006: PBOT municipal (Acuerdo 024 → 017).'}
+        ],
+        media:'CAMAN / pista de aterrizaje — foto/mapa pendiente'
+      },
+      {
+        id:'p6', type:'node', top: 12, left: 54,
+        date:'1970 – hoy', label:'La floricultura',
+        summary:'La Bella Flor de la Sabana',
+        bullets:[
+          {tag:'productivo', text:'Desde los años 70, motor económico — hoy ~18% de la producción de Cundinamarca.'},
+          {tag:'sociocultural', text:'1989: primer Festival de las Flores · 2008: institucionalizado (Acuerdo 018).'},
+          {tag:'sociocultural', text:'Tradición silletera como símbolo de identidad campesina.'},
+          {tag:'productivo', text:'<b>El problema:</b> expansión de invernaderos y presión creciente sobre el agua subterránea del corredor agroindustrial.'}
+        ],
+        media:'Invernaderos / cultivo de flores — foto pendiente'
+      }
+    ]
+  },
+  {
+    title: "2018 – hoy",
+    nodes: [
+      {
+        id:'p7', type:'node', top: 58, left: 4,
+        date:'2018 – 2019', label:'Memoria recuperada (y apagada)',
+        summary:'Totachagua: un solo periodo de alcalde',
+        bullets:[
+          {tag:'toponimia', text:'Nace el festival <b>Totachagua</b>, que revive el nombre en lengua muisca — TO (río) + TA (labranza) + CHA (comunidad) + GUA (maíz).'},
+          {tag:'sociocultural', text:'Festival del maíz, fiesta de la ruralidad, participación de abuelos, jóvenes y niños.'},
+          {tag:'jurisdiccion', text:'<b>Se realizó solo durante un periodo de alcalde.</b> Las administraciones siguientes no lo retomaron y volvieron a sostener únicamente el Festival de las Flores.'}
+        ],
+        media:'Festival Totachagua — foto pendiente'
+      },
+      {
+        id:'tesoro', type:'milestone', top: 8, left: 40,
+        date:'1999 – 2026', label:'Zoom: barrio El Tesoro',
+        summary:'Autogestión popular, centro-oriente del municipio',
+        bullets:[
+          {tag:'localizacion', text:'Centro-oriente del municipio — colinda con la pista de aterrizaje del CAMAN.'},
+          {tag:'jurisdiccion', text:'<b>1999:</b> terreno comprado legalmente, no entregado → toma por vías de hecho de una asociación de vivienda.'},
+          {tag:'jurisdiccion', text:'<b>2000-2003:</b> acueducto y energía, ganados con juntanzas, bazares y alianzas políticas.'},
+          {tag:'jurisdiccion', text:'<b>2003-2006:</b> consolidación morfológica y espacio público.'},
+          {tag:'jurisdiccion', text:'<b>2006-2010:</b> mejoramiento vial.'},
+          {tag:'jurisdiccion', text:'<b>2010-2026:</b> consolidación final y desarraigo — el barrio llega a su forma más estable justo cuando pierde a su población original (arriendo).'},
+          {tag:'productivo', text:'Sin actividad productiva propia: comparte la floricultura y su "problema" de agua a escala municipal.'},
+          {tag:'sociocultural', text:'<b>El vestigio:</b> luminarias con base en forma de cofre, vandalizadas con los años — la base-cofre es hoy el único rastro físico de la lucha original.'}
+        ],
+        media:'Base-cofre de las luminarias — foto pendiente'
+      },
+      {
+        id:'cierre', type:'finale', top: 62, left: 78,
+        date:'presente', label:'Cierre reflexivo',
+        summary:'Ver la nota completa debajo de la tira',
+        bullets:[
+          {tag:'sociocultural', text:'Ver la tarjeta de cierre al final de esta página para la reflexión completa sobre memoria e interés económico.'}
+        ],
+        media:null
+      }
+    ]
+  }
+];
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const strip = document.getElementById('strip');
+
+hojas.forEach((hoja, hi) => {
+  const hojaEl = document.createElement('div');
+  hojaEl.className = 'hoja ' + (hi % 2 === 0 ? 'jag-a' : 'jag-b');
+
+  const tab = document.createElement('div');
+  tab.className = 'hoja-tab';
+  tab.textContent = 'hoja ' + (hi+1);
+  tab.tabIndex = 0;
+  tab.setAttribute('role','button');
+  tab.setAttribute('aria-label','Abrir o cerrar todos los momentos de esta hoja');
+  hojaEl.appendChild(tab);
+
+  const titleEl = document.createElement('div');
+  titleEl.className = 'hoja-title';
+  titleEl.textContent = hoja.title;
+  hojaEl.appendChild(titleEl);
+
+  const spine = document.createElement('div');
+  spine.className = 'spine';
+
+  const drawers = document.createElement('div');
+  drawers.className = 'drawers';
+
+  hoja.nodes.forEach(n => {
+    const nodeEl = document.createElement('div');
+    nodeEl.className = 'node ' + n.type;
+    nodeEl.style.top = n.top + '%';
+    nodeEl.style.left = n.left + '%';
+    nodeEl.tabIndex = 0;
+    nodeEl.dataset.target = n.id;
+    nodeEl.setAttribute('role','button');
+    nodeEl.setAttribute('aria-expanded','false');
+
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    nodeEl.appendChild(dot);
+
+    const dateTag = document.createElement('div');
+    dateTag.className = 'date-tag';
+    dateTag.textContent = n.date;
+    nodeEl.appendChild(dateTag);
+
+    const orangeLabel = document.createElement('div');
+    orangeLabel.className = 'orange-label';
+    orangeLabel.textContent = n.label;
+    nodeEl.appendChild(orangeLabel);
+
+    if(n.media){
+      const blob = document.createElement('div');
+      blob.className = 'blob';
+      nodeEl.appendChild(blob);
+    }
+
+    spine.appendChild(nodeEl);
+
+    // Drawer
+    const drawer = document.createElement('div');
+    drawer.className = 'drawer';
+    drawer.id = 'drawer-' + n.id;
+
+    const inner = document.createElement('div');
+    inner.className = 'drawer-inner';
+
+    const h4 = document.createElement('h4');
+    h4.textContent = n.label;
+    inner.appendChild(h4);
+
+    const tagRow = document.createElement('div');
+    tagRow.className = 'tag-row';
+    const seen = new Set();
+    n.bullets.forEach(b => {
+      if(!seen.has(b.tag)){
+        seen.add(b.tag);
+        const t = document.createElement('span');
+        t.className = 'tag';
+        t.style.background = TAG_COLORS[b.tag];
+        t.textContent = TAG_LABELS[b.tag];
+        tagRow.appendChild(t);
+      }
+    });
+    inner.appendChild(tagRow);
+
+    const ul = document.createElement('ul');
+    n.bullets.forEach(b => {
+      const li = document.createElement('li');
+      li.innerHTML = b.text;
+      ul.appendChild(li);
+    });
+    inner.appendChild(ul);
+
+    if(n.media){
+      const mediaRow = document.createElement('div');
+      mediaRow.className = 'media-row';
+      const ph = document.createElement('div');
+      ph.className = 'media-placeholder';
+      ph.textContent = n.media;
+      mediaRow.appendChild(ph);
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.textContent = 'Reemplaza este bloque por una foto, mapa o plano real editando la propiedad "media" en el arreglo de datos.';
+      mediaRow.appendChild(note);
+      inner.appendChild(mediaRow);
+    }
+
+    drawer.appendChild(inner);
+    drawers.appendChild(drawer);
+
+    nodeEl.addEventListener('click', () => toggleNode(nodeEl, drawer));
+    nodeEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleNode(nodeEl, drawer); }
+    });
+  });
+
+  hojaEl.appendChild(spine);
+  hojaEl.appendChild(drawers);
+
+  tab.addEventListener('click', () => {
+    const allNodes = spine.querySelectorAll('.node');
+    const anyClosed = Array.from(allNodes).some(n => !n.classList.contains('open'));
+    allNodes.forEach(n => {
+      const d = document.getElementById('drawer-' + n.dataset.target);
+      setNodeState(n, d, anyClosed);
+    });
+  });
+  tab.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tab.click(); }
+  });
+
+  strip.appendChild(hojaEl);
+});
+
+function toggleNode(nodeEl, drawer){
+  const willOpen = !nodeEl.classList.contains('open');
+  setNodeState(nodeEl, drawer, willOpen);
+}
+function setNodeState(nodeEl, drawer, open){
+  nodeEl.classList.toggle('open', open);
+  drawer.classList.toggle('open', open);
+  nodeEl.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+/* ============================================================
+   WIRE — dibuja el hilo rojo conectando los puntos reales
+   ============================================================ */
+function drawWire(){
+  const svg = document.getElementById('wire');
+  const path = document.getElementById('wire-path');
+  const dots = Array.from(document.querySelectorAll('.dot'));
+  const outer = document.querySelector('.strip-outer');
+  const outerRect = outer.getBoundingClientRect();
+  const scrollX = outer.scrollLeft;
+
+  svg.setAttribute('width', outer.scrollWidth);
+  svg.setAttribute('height', outerRect.height);
+  svg.style.left = '0px';
+  svg.style.top = '0px';
+
+  const pts = dots.map(d => {
+    const r = d.getBoundingClientRect();
+    return {
+      x: r.left - outerRect.left + scrollX + r.width/2,
+      y: r.top - outerRect.top + r.height/2
+    };
+  });
+
+  if(pts.length < 2){ path.setAttribute('d',''); return; }
+
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0 = pts[i], p1 = pts[i+1];
+    const mx = (p0.x+p1.x)/2;
+    d += ` Q ${mx} ${p0.y}, ${mx} ${(p0.y+p1.y)/2} T ${p1.x} ${p1.y}`;
+  }
+  path.setAttribute('d', d);
+}
+
+window.addEventListener('load', drawWire);
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(drawWire, 150);
+});
+document.querySelector('.strip-outer').addEventListener('scroll', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(drawWire, 60);
+});
+</script>
+
+</body>
+</html>
