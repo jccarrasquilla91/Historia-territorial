@@ -164,7 +164,7 @@
   /* ---------- Spine (wave of nodes) ---------- */
   .spine{
     position:relative;
-    height:300px;
+    height:400px;
   }
   .node{
     position:absolute;
@@ -209,13 +209,14 @@
     50%{ box-shadow:0 0 0 7px rgba(138,63,156,.28); }
   }
 
-  .date-tag, .orange-label, .blob{
+  .date-tag, .orange-label, .blob, .summary-line, .read-more{
     opacity:0;
     transform:translateY(4px);
     transition: opacity .35s ease .05s, transform .35s ease .05s;
     pointer-events:none;
   }
-  .node.revealed .date-tag, .node.revealed .orange-label, .node.revealed .blob{
+  .node.active .date-tag, .node.active .orange-label, .node.active .blob, .node.active .summary-line, .node.active .read-more,
+  .node.revealed .date-tag, .node.revealed .orange-label, .node.revealed .blob, .node.revealed .summary-line, .node.revealed .read-more{
     opacity:1;
     transform:translateY(0);
     pointer-events:auto;
@@ -235,6 +236,23 @@
     display:inline;
     background-image:linear-gradient(180deg, transparent 55%, rgba(235,154,52,.55) 55%);
   }
+  .summary-line{
+    font-size:11.5px;
+    color:#555;
+    font-style:italic;
+    line-height:1.35;
+    margin-top:6px;
+    max-width:150px;
+  }
+  .read-more{
+    font-size:11px;
+    font-weight:600;
+    color:var(--red-dark);
+    margin-top:6px;
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .node.milestone .read-more{ color:var(--purple); }
   .blob{
     width:56px; height:40px;
     margin-top:8px;
@@ -243,33 +261,54 @@
     border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
   }
 
-  /* ---------- Drawers ---------- */
-  .drawers{ position:relative; }
-  .drawer{
-    max-height:0;
-    overflow:hidden;
-    transform-origin:top center;
-    transform: rotateX(-6deg);
-    opacity:0;
-    transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s ease, transform .45s cubic-bezier(.4,0,.2,1), padding .3s ease, margin .3s ease;
-    border-top:0 solid var(--ink);
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0;
+    background:rgba(28,24,18,.55);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    z-index:50;
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
   }
-  .drawer.open{
-    max-height:900px;
-    opacity:1;
-    transform: rotateX(0deg);
-    border-top:2px dashed #cfc6a8;
-    padding-top:18px;
-    margin-top:6px;
+  .modal-backdrop.open{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    background:var(--paper);
+    max-width:620px; width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+    border-radius:4px;
+    padding:34px 32px 30px;
+    position:relative;
+    box-shadow:0 18px 50px rgba(0,0,0,.35);
+    transform:scale(.94) translateY(10px);
+    transition:transform .25s cubic-bezier(.34,1.4,.64,1);
   }
-  .drawer-inner{ padding-bottom:6px; }
-  .drawer h4{
+  .modal-backdrop.open .modal-card{ transform:scale(1) translateY(0); }
+  .modal-close{
+    position:absolute; top:14px; right:16px;
+    width:34px; height:34px;
+    border:none; background:transparent;
     font-family:'Kalam', cursive;
-    font-size:19px;
-    color:var(--navy);
-    margin:0 0 10px;
+    font-size:22px;
+    color:#777;
+    cursor:pointer;
+    line-height:1;
   }
-  .tag-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .modal-close:hover{ color:var(--red-dark); }
+  .modal-date{
+    font-family:'Kalam', cursive;
+    font-size:15px;
+    color:#666;
+    margin-bottom:2px;
+  }
+  .modal-card h4{
+    font-family:'Kalam', cursive;
+    font-size:26px;
+    color:var(--navy);
+    margin:0 0 14px;
+  }
+  .tag-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
   .tag{
     font-size:10.5px;
     padding:2px 8px;
@@ -277,21 +316,21 @@
     color:#fff;
     white-space:nowrap;
   }
-  .drawer ul{ margin:0 0 12px; padding-left:18px; }
-  .drawer li{ font-size:13.5px; line-height:1.55; margin-bottom:6px; color:#333; }
-  .drawer li b{ color:var(--ink); }
+  .modal-card ul{ margin:0 0 16px; padding-left:20px; }
+  .modal-card li{ font-size:14.5px; line-height:1.6; margin-bottom:9px; color:#333; }
+  .modal-card li b{ color:var(--ink); }
 
-  .media-row{ display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start; }
+  .media-row{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; margin-top:6px; }
   .media-placeholder{
     flex:none;
-    width:150px; height:104px;
+    width:190px; height:130px;
     border:2px solid var(--green);
     background:repeating-linear-gradient(135deg, rgba(127,178,58,.10) 0 8px, transparent 8px 16px);
     display:flex; align-items:center; justify-content:center;
     text-align:center;
-    font-size:10.5px;
+    font-size:11px;
     color:#5a7a2e;
-    padding:6px;
+    padding:8px;
     border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
   }
   .note{
@@ -350,7 +389,7 @@
   <span class="eyebrow">línea de tiempo territorial — frizo interactivo</span>
   <h1>Madrid, Cundinamarca</h1>
   <p>Configuración histórica y organización del espacio, del periodo Herrera al presente. Cada hoja de esta tira es un tramo del tiempo; el hilo rojo conecta los momentos; lo verde son fotos o mapas y lo naranja son notas cortas.</p>
-  <p class="howto">Toca el primer punto para empezar el recorrido: se abre su información y el hilo avanza hasta el siguiente punto. Cada punto se revela solo cuando llegas a él.</p>
+  <p class="howto">Toca el primer punto para empezar el recorrido: verás su título y un resumen, y el hilo avanza hasta el siguiente punto. Toca "leer más" en cualquier punto para abrir el detalle completo en una ventana.</p>
   <button id="restart-btn" type="button">↺ Reiniciar recorrido</button>
 
   <div class="legend">
@@ -365,6 +404,17 @@
 <div class="strip-outer">
   <div class="strip" id="strip"></div>
   <svg id="wire" style="position:absolute; top:0; left:0; pointer-events:none; overflow:visible;" width="1" height="1"></svg>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal-close" id="modal-close" aria-label="Cerrar">×</button>
+    <div class="modal-date" id="modal-date"></div>
+    <h4 id="modal-title"></h4>
+    <div class="tag-row" id="modal-tags"></div>
+    <ul id="modal-bullets"></ul>
+    <div class="media-row" id="modal-media"></div>
+  </div>
 </div>
 
 <div class="cierre-banner">
@@ -556,9 +606,6 @@ hojas.forEach((hoja, hi) => {
   const spine = document.createElement('div');
   spine.className = 'spine';
 
-  const drawers = document.createElement('div');
-  drawers.className = 'drawers';
-
   hoja.nodes.forEach(n => {
     const nodeEl = document.createElement('div');
     nodeEl.className = 'node ' + n.type + ' locked';
@@ -567,7 +614,7 @@ hojas.forEach((hoja, hi) => {
     nodeEl.tabIndex = -1;
     nodeEl.dataset.target = n.id;
     nodeEl.setAttribute('role','button');
-    nodeEl.setAttribute('aria-expanded','false');
+    nodeEl.setAttribute('aria-haspopup','dialog');
 
     const dot = document.createElement('div');
     dot.className = 'dot';
@@ -583,67 +630,25 @@ hojas.forEach((hoja, hi) => {
     orangeLabel.textContent = n.label;
     nodeEl.appendChild(orangeLabel);
 
+    const summaryLine = document.createElement('div');
+    summaryLine.className = 'summary-line';
+    summaryLine.textContent = n.summary || '';
+    nodeEl.appendChild(summaryLine);
+
     if(n.media){
       const blob = document.createElement('div');
       blob.className = 'blob';
       nodeEl.appendChild(blob);
     }
 
+    const readMore = document.createElement('div');
+    readMore.className = 'read-more';
+    readMore.textContent = 'leer más →';
+    nodeEl.appendChild(readMore);
+
     spine.appendChild(nodeEl);
 
-    // Drawer
-    const drawer = document.createElement('div');
-    drawer.className = 'drawer';
-    drawer.id = 'drawer-' + n.id;
-
-    const inner = document.createElement('div');
-    inner.className = 'drawer-inner';
-
-    const h4 = document.createElement('h4');
-    h4.textContent = n.label;
-    inner.appendChild(h4);
-
-    const tagRow = document.createElement('div');
-    tagRow.className = 'tag-row';
-    const seen = new Set();
-    n.bullets.forEach(b => {
-      if(!seen.has(b.tag)){
-        seen.add(b.tag);
-        const t = document.createElement('span');
-        t.className = 'tag';
-        t.style.background = TAG_COLORS[b.tag];
-        t.textContent = TAG_LABELS[b.tag];
-        tagRow.appendChild(t);
-      }
-    });
-    inner.appendChild(tagRow);
-
-    const ul = document.createElement('ul');
-    n.bullets.forEach(b => {
-      const li = document.createElement('li');
-      li.innerHTML = b.text;
-      ul.appendChild(li);
-    });
-    inner.appendChild(ul);
-
-    if(n.media){
-      const mediaRow = document.createElement('div');
-      mediaRow.className = 'media-row';
-      const ph = document.createElement('div');
-      ph.className = 'media-placeholder';
-      ph.textContent = n.media;
-      mediaRow.appendChild(ph);
-      const note = document.createElement('div');
-      note.className = 'note';
-      note.textContent = 'Reemplaza este bloque por una foto, mapa o plano real editando la propiedad "media" en el arreglo de datos.';
-      mediaRow.appendChild(note);
-      inner.appendChild(mediaRow);
-    }
-
-    drawer.appendChild(inner);
-    drawers.appendChild(drawer);
-
-    const entry = { el: nodeEl, drawer, id: n.id, type: n.type };
+    const entry = { el: nodeEl, id: n.id, type: n.type, data: n };
     flatNodes.push(entry);
 
     nodeEl.addEventListener('click', () => handleNodeClick(entry));
@@ -653,17 +658,16 @@ hojas.forEach((hoja, hi) => {
   });
 
   hojaEl.appendChild(spine);
-  hojaEl.appendChild(drawers);
   strip.appendChild(hojaEl);
 });
 
 /* ============================================================
    RECORRIDO SECUENCIAL
    Cada nodo empieza 'locked' (invisible). El primero pasa a
-   'active' (punto visible, parpadeante, sin info). Al hacer clic
-   en el nodo activo: se abre su cajón, pasa a 'revealed', se
-   dibuja el tramo del hilo hasta el siguiente punto y ese
-   siguiente punto pasa a 'active'.
+   'active': el punto, fecha, título y resumen se ven, parpadeando,
+   invitando al clic. Al hacer clic: se abre el modal con el
+   detalle completo, el nodo pasa a 'revealed', se dibuja el tramo
+   del hilo hasta el siguiente punto y ese punto pasa a 'active'.
    ============================================================ */
 function setState(entry, state){
   entry.el.classList.remove('locked','active','revealed');
@@ -675,38 +679,88 @@ function handleNodeClick(entry){
   const idx = flatNodes.indexOf(entry);
   if(entry.el.classList.contains('locked')) return;
 
-  if(entry.el.classList.contains('active')){
-    // primer clic sobre el punto activo: revela + avanza
-    setState(entry, 'revealed');
-    entry.el.classList.add('open');
-    entry.drawer.classList.add('open');
-    entry.el.setAttribute('aria-expanded','true');
+  openModal(entry);
 
+  if(entry.el.classList.contains('active')){
+    setState(entry, 'revealed');
     const next = flatNodes[idx+1];
     if(next){
       animateSegment(idx, () => setState(next, 'active'));
     }
-    return;
   }
-
-  // ya estaba revelado: solo alterna su propio cajón
-  const willOpen = !entry.el.classList.contains('open');
-  entry.el.classList.toggle('open', willOpen);
-  entry.drawer.classList.toggle('open', willOpen);
-  entry.el.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 }
 
 function resetTour(){
-  flatNodes.forEach((entry, i) => {
-    entry.el.classList.remove('open');
-    entry.drawer.classList.remove('open');
-    entry.el.setAttribute('aria-expanded','false');
-    setState(entry, i === 0 ? 'active' : 'locked');
-  });
+  closeModal();
+  flatNodes.forEach((entry, i) => setState(entry, i === 0 ? 'active' : 'locked'));
   segments.forEach(seg => showSegment(seg, false, true));
   document.querySelector('.strip-outer').scrollTo({left:0, behavior:'smooth'});
 }
 document.getElementById('restart-btn').addEventListener('click', resetTour);
+
+/* ============================================================
+   MODAL — ventana con el detalle completo de un momento
+   ============================================================ */
+const backdrop = document.getElementById('modal-backdrop');
+const modalDate = document.getElementById('modal-date');
+const modalTitle = document.getElementById('modal-title');
+const modalTags = document.getElementById('modal-tags');
+const modalBullets = document.getElementById('modal-bullets');
+const modalMedia = document.getElementById('modal-media');
+let lastFocused = null;
+
+function openModal(entry){
+  const n = entry.data;
+  lastFocused = document.activeElement;
+
+  modalDate.textContent = n.date;
+  modalTitle.textContent = n.label;
+
+  modalTags.innerHTML = '';
+  const seen = new Set();
+  n.bullets.forEach(b => {
+    if(!seen.has(b.tag)){
+      seen.add(b.tag);
+      const t = document.createElement('span');
+      t.className = 'tag';
+      t.style.background = TAG_COLORS[b.tag];
+      t.textContent = TAG_LABELS[b.tag];
+      modalTags.appendChild(t);
+    }
+  });
+
+  modalBullets.innerHTML = '';
+  n.bullets.forEach(b => {
+    const li = document.createElement('li');
+    li.innerHTML = b.text;
+    modalBullets.appendChild(li);
+  });
+
+  modalMedia.innerHTML = '';
+  if(n.media){
+    const ph = document.createElement('div');
+    ph.className = 'media-placeholder';
+    ph.textContent = n.media;
+    modalMedia.appendChild(ph);
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = 'Reemplaza este bloque por una foto, mapa o plano real editando la propiedad "media" en el arreglo de datos.';
+    modalMedia.appendChild(note);
+  }
+
+  backdrop.classList.add('open');
+  document.getElementById('modal-close').focus();
+}
+
+function closeModal(){
+  backdrop.classList.remove('open');
+  if(lastFocused) lastFocused.focus();
+}
+document.getElementById('modal-close').addEventListener('click', closeModal);
+backdrop.addEventListener('click', (e) => { if(e.target === backdrop) closeModal(); });
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && backdrop.classList.contains('open')) closeModal();
+});
 
 /* ============================================================
    HILO — un <path> por tramo, para poder animarlo al llegar
