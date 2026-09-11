@@ -70,6 +70,21 @@
     font-style:italic;
     margin-top:18px;
   }
+  #restart-btn{
+    margin-top:14px;
+    font-family:'Work Sans', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    color:var(--navy);
+    background:var(--paper);
+    border:1.5px solid #cabf9c;
+    border-radius:20px;
+    padding:8px 16px;
+    cursor:pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  #restart-btn:hover{ background:#efe8d3; }
+  #restart-btn:active{ transform:scale(.97); }
 
   /* ---------- Legend ---------- */
   .legend{
@@ -135,22 +150,9 @@
     font-size:14px;
     padding:6px 14px 5px;
     border-radius:3px 3px 0 0;
-    cursor:pointer;
     user-select:none;
     box-shadow:0 -1px 0 rgba(0,0,0,.2);
   }
-  .hoja-tab:hover{ background:var(--red-dark); }
-  .hoja-tab:after{
-    content:"clic para abrir todo ↕";
-    display:none;
-    position:absolute;
-    top:110%; right:0;
-    font-family:'Work Sans',sans-serif;
-    font-size:10.5px;
-    color:#8a8a7a;
-    white-space:nowrap;
-  }
-  .hoja-tab:hover:after{ display:block; }
 
   .hoja-title{
     font-family:'Kalam', cursive;
@@ -190,6 +192,33 @@
     background:var(--olive); box-shadow:0 0 0 2px var(--olive);
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
     border-radius:0; border:none; width:26px;height:26px;
+  }
+
+  /* ---- Estados del recorrido secuencial ---- */
+  .node.locked{ pointer-events:none; }
+  .node.locked .dot{ opacity:0; }
+  .node.active .dot{ animation: pulse 1.3s ease-in-out infinite; cursor:pointer; }
+  .node.active, .node.revealed{ pointer-events:auto; }
+  @keyframes pulse{
+    0%, 100%{ box-shadow:0 0 0 2px var(--red); }
+    50%{ box-shadow:0 0 0 7px rgba(200,55,42,.28); }
+  }
+  .node.milestone.active .dot{ animation: pulse-m 1.3s ease-in-out infinite; }
+  @keyframes pulse-m{
+    0%, 100%{ box-shadow:0 0 0 2px var(--purple); }
+    50%{ box-shadow:0 0 0 7px rgba(138,63,156,.28); }
+  }
+
+  .date-tag, .orange-label, .blob{
+    opacity:0;
+    transform:translateY(4px);
+    transition: opacity .35s ease .05s, transform .35s ease .05s;
+    pointer-events:none;
+  }
+  .node.revealed .date-tag, .node.revealed .orange-label, .node.revealed .blob{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
   }
 
   .date-tag{
@@ -304,7 +333,8 @@
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce){
-    .drawer, .dot{ transition:none; }
+    .drawer, .dot, .date-tag, .orange-label, .blob{ transition:none; }
+    .node.active .dot{ animation:none; }
   }
 
   /* Focus visibility */
@@ -320,7 +350,8 @@
   <span class="eyebrow">línea de tiempo territorial — frizo interactivo</span>
   <h1>Madrid, Cundinamarca</h1>
   <p>Configuración histórica y organización del espacio, del periodo Herrera al presente. Cada hoja de esta tira es un tramo del tiempo; el hilo rojo conecta los momentos; lo verde son fotos o mapas y lo naranja son notas cortas.</p>
-  <p class="howto">Toca un punto del hilo para desplegar ese momento. Toca la pestaña negra en la esquina de una hoja para abrir o cerrar todos sus momentos a la vez.</p>
+  <p class="howto">Toca el primer punto para empezar el recorrido: se abre su información y el hilo avanza hasta el siguiente punto. Cada punto se revela solo cuando llegas a él.</p>
+  <button id="restart-btn" type="button">↺ Reiniciar recorrido</button>
 
   <div class="legend">
     <span><i style="background:#3fa6c9"></i>Localización y geografía</span>
@@ -333,9 +364,7 @@
 
 <div class="strip-outer">
   <div class="strip" id="strip"></div>
-  <svg id="wire" style="position:absolute; top:0; left:0; pointer-events:none; overflow:visible;" width="1" height="1">
-    <path id="wire-path" d="" fill="none" stroke="#c8372a" stroke-width="4" stroke-linecap="round" opacity="0.92"/>
-  </svg>
+  <svg id="wire" style="position:absolute; top:0; left:0; pointer-events:none; overflow:visible;" width="1" height="1"></svg>
 </div>
 
 <div class="cierre-banner">
@@ -508,6 +537,7 @@ const hojas = [
    RENDER
    ============================================================ */
 const strip = document.getElementById('strip');
+const flatNodes = []; // { el, drawer, id, type } en orden cronológico
 
 hojas.forEach((hoja, hi) => {
   const hojaEl = document.createElement('div');
@@ -516,9 +546,6 @@ hojas.forEach((hoja, hi) => {
   const tab = document.createElement('div');
   tab.className = 'hoja-tab';
   tab.textContent = 'hoja ' + (hi+1);
-  tab.tabIndex = 0;
-  tab.setAttribute('role','button');
-  tab.setAttribute('aria-label','Abrir o cerrar todos los momentos de esta hoja');
   hojaEl.appendChild(tab);
 
   const titleEl = document.createElement('div');
@@ -534,10 +561,10 @@ hojas.forEach((hoja, hi) => {
 
   hoja.nodes.forEach(n => {
     const nodeEl = document.createElement('div');
-    nodeEl.className = 'node ' + n.type;
+    nodeEl.className = 'node ' + n.type + ' locked';
     nodeEl.style.top = n.top + '%';
     nodeEl.style.left = n.left + '%';
-    nodeEl.tabIndex = 0;
+    nodeEl.tabIndex = -1;
     nodeEl.dataset.target = n.id;
     nodeEl.setAttribute('role','button');
     nodeEl.setAttribute('aria-expanded','false');
@@ -616,84 +643,150 @@ hojas.forEach((hoja, hi) => {
     drawer.appendChild(inner);
     drawers.appendChild(drawer);
 
-    nodeEl.addEventListener('click', () => toggleNode(nodeEl, drawer));
+    const entry = { el: nodeEl, drawer, id: n.id, type: n.type };
+    flatNodes.push(entry);
+
+    nodeEl.addEventListener('click', () => handleNodeClick(entry));
     nodeEl.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleNode(nodeEl, drawer); }
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); handleNodeClick(entry); }
     });
   });
 
   hojaEl.appendChild(spine);
   hojaEl.appendChild(drawers);
-
-  tab.addEventListener('click', () => {
-    const allNodes = spine.querySelectorAll('.node');
-    const anyClosed = Array.from(allNodes).some(n => !n.classList.contains('open'));
-    allNodes.forEach(n => {
-      const d = document.getElementById('drawer-' + n.dataset.target);
-      setNodeState(n, d, anyClosed);
-    });
-  });
-  tab.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tab.click(); }
-  });
-
   strip.appendChild(hojaEl);
 });
 
-function toggleNode(nodeEl, drawer){
-  const willOpen = !nodeEl.classList.contains('open');
-  setNodeState(nodeEl, drawer, willOpen);
-}
-function setNodeState(nodeEl, drawer, open){
-  nodeEl.classList.toggle('open', open);
-  drawer.classList.toggle('open', open);
-  nodeEl.setAttribute('aria-expanded', open ? 'true' : 'false');
+/* ============================================================
+   RECORRIDO SECUENCIAL
+   Cada nodo empieza 'locked' (invisible). El primero pasa a
+   'active' (punto visible, parpadeante, sin info). Al hacer clic
+   en el nodo activo: se abre su cajón, pasa a 'revealed', se
+   dibuja el tramo del hilo hasta el siguiente punto y ese
+   siguiente punto pasa a 'active'.
+   ============================================================ */
+function setState(entry, state){
+  entry.el.classList.remove('locked','active','revealed');
+  entry.el.classList.add(state);
+  entry.el.tabIndex = (state === 'locked') ? -1 : 0;
 }
 
+function handleNodeClick(entry){
+  const idx = flatNodes.indexOf(entry);
+  if(entry.el.classList.contains('locked')) return;
+
+  if(entry.el.classList.contains('active')){
+    // primer clic sobre el punto activo: revela + avanza
+    setState(entry, 'revealed');
+    entry.el.classList.add('open');
+    entry.drawer.classList.add('open');
+    entry.el.setAttribute('aria-expanded','true');
+
+    const next = flatNodes[idx+1];
+    if(next){
+      animateSegment(idx, () => setState(next, 'active'));
+    }
+    return;
+  }
+
+  // ya estaba revelado: solo alterna su propio cajón
+  const willOpen = !entry.el.classList.contains('open');
+  entry.el.classList.toggle('open', willOpen);
+  entry.drawer.classList.toggle('open', willOpen);
+  entry.el.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+}
+
+function resetTour(){
+  flatNodes.forEach((entry, i) => {
+    entry.el.classList.remove('open');
+    entry.drawer.classList.remove('open');
+    entry.el.setAttribute('aria-expanded','false');
+    setState(entry, i === 0 ? 'active' : 'locked');
+  });
+  segments.forEach(seg => showSegment(seg, false, true));
+  document.querySelector('.strip-outer').scrollTo({left:0, behavior:'smooth'});
+}
+document.getElementById('restart-btn').addEventListener('click', resetTour);
+
 /* ============================================================
-   WIRE — dibuja el hilo rojo conectando los puntos reales
+   HILO — un <path> por tramo, para poder animarlo al llegar
    ============================================================ */
-function drawWire(){
-  const svg = document.getElementById('wire');
-  const path = document.getElementById('wire-path');
-  const dots = Array.from(document.querySelectorAll('.dot'));
+const svg = document.getElementById('wire');
+let segments = []; // { path, revealed }
+
+function buildSegments(){
+  svg.innerHTML = '';
+  segments = flatNodes.slice(0, -1).map(() => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('fill','none');
+    p.setAttribute('stroke','#c8372a');
+    p.setAttribute('stroke-width','4');
+    p.setAttribute('stroke-linecap','round');
+    p.setAttribute('opacity','0.92');
+    svg.appendChild(p);
+    return { path: p, revealed: false };
+  });
+}
+
+function showSegment(seg, revealed, instant){
+  seg.revealed = revealed;
+  const len = seg.path.getTotalLength ? seg.path.getTotalLength() : 0;
+  if(instant){ seg.path.style.transition = 'none'; }
+  else { seg.path.style.transition = 'stroke-dashoffset .75s cubic-bezier(.4,0,.2,1)'; }
+  seg.path.style.strokeDasharray = len;
+  seg.path.style.strokeDashoffset = revealed ? 0 : len;
+  if(instant){ seg.path.getBoundingClientRect(); seg.path.style.transition = ''; }
+}
+
+function animateSegment(idx, onDone){
+  const seg = segments[idx];
+  if(!seg){ if(onDone) onDone(); return; }
+  showSegment(seg, true, false);
+  setTimeout(() => { if(onDone) onDone(); }, 760);
+}
+
+function layoutWire(){
   const outer = document.querySelector('.strip-outer');
   const outerRect = outer.getBoundingClientRect();
   const scrollX = outer.scrollLeft;
 
   svg.setAttribute('width', outer.scrollWidth);
   svg.setAttribute('height', outerRect.height);
-  svg.style.left = '0px';
-  svg.style.top = '0px';
 
-  const pts = dots.map(d => {
-    const r = d.getBoundingClientRect();
+  const pts = flatNodes.map(n => {
+    const r = n.el.querySelector('.dot').getBoundingClientRect();
     return {
       x: r.left - outerRect.left + scrollX + r.width/2,
       y: r.top - outerRect.top + r.height/2
     };
   });
 
-  if(pts.length < 2){ path.setAttribute('d',''); return; }
-
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for(let i=0;i<pts.length-1;i++){
+  segments.forEach((seg, i) => {
     const p0 = pts[i], p1 = pts[i+1];
     const mx = (p0.x+p1.x)/2;
-    d += ` Q ${mx} ${p0.y}, ${mx} ${(p0.y+p1.y)/2} T ${p1.x} ${p1.y}`;
-  }
-  path.setAttribute('d', d);
+    const d = `M ${p0.x} ${p0.y} Q ${mx} ${p0.y}, ${mx} ${(p0.y+p1.y)/2} T ${p1.x} ${p1.y}`;
+    seg.path.setAttribute('d', d);
+    showSegment(seg, seg.revealed, true); // conserva el estado, sin re-animar
+  });
 }
 
-window.addEventListener('load', drawWire);
+function init(){
+  buildSegments();
+  layoutWire();
+  setState(flatNodes[0], 'active');
+}
+
+window.addEventListener('load', () => { layoutWire(); });
+init();
+
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(drawWire, 150);
+  resizeTimer = setTimeout(layoutWire, 150);
 });
 document.querySelector('.strip-outer').addEventListener('scroll', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(drawWire, 60);
+  resizeTimer = setTimeout(layoutWire, 60);
 });
 </script>
 
