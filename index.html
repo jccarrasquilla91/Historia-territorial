@@ -135,9 +135,8 @@
   .hoja:nth-child(odd){ transform: rotate(-0.35deg); }
   .hoja:nth-child(even){ transform: rotate(0.35deg); }
 
-  /* jagged hand-drawn edges via clip-path, alternating per hoja */
-  .hoja.jag-a{ clip-path: polygon(0% 2%, 3% 0%, 100% 1%, 99% 4%, 100% 97%, 97% 100%, 2% 99%, 0% 96%); }
-  .hoja.jag-b{ clip-path: polygon(1% 0%, 100% 2%, 98% 0%, 100% 3%, 99% 98%, 100% 100%, 0% 98%, 2% 100%); }
+  /* esquinas redondeadas, sin recorte irregular (evita cortar texto) */
+  .hoja{ border-radius: 14px; }
 
   .hoja + .hoja{ border-left: 3px solid var(--ink); }
 
@@ -452,6 +451,23 @@ const TAG_LABELS = {
 
 const hojas = [
   {
+    title: "Contexto geográfico",
+    nodes: [
+      {
+        id:'p0', type:'milestone', top: 42, left: 30,
+        date:'el municipio, hoy', label:'Localización y geografía',
+        summary:'120,5 km² en la Sabana de Bogotá',
+        bullets:[
+          {tag:'localizacion', text:'Municipio de <b>120,5 km²</b> (12.050 ha: 750 urbanas / 11.300 rurales), a 2.554 m s.n.m., 21 km al noroeste de Bogotá.'},
+          {tag:'localizacion', text:'Hace parte de la <b>Provincia de Sabana Occidente</b> (Cundinamarca) y del Área Metropolitana de Bogotá desde 2005.'},
+          {tag:'localizacion', text:'Limita con El Rosal y Subachoque (norte), Tenjo (nororiente), Facatativá (oeste), Funza (oriente), Bojacá (sur) y Mosquera (suroriente).'},
+          {tag:'localizacion', text:'16 veredas rurales; determinantes ecológicos principales: la reserva del <b>Valle del Abra</b>, el <b>río Subachoque</b> y la <b>Laguna de la Herrera</b> (cuenca del río Bojacá).'}
+        ],
+        media:'Mapa de límites municipales — pendiente'
+      }
+    ]
+  },
+  {
     title: "1536 y antes",
     nodes: [
       {
@@ -483,7 +499,7 @@ const hojas = [
     ]
   },
   {
-    title: "1774 – 1976",
+    title: "1774 – 1991",
     nodes: [
       {
         id:'p3', type:'node', top: 62, left: 6,
@@ -492,6 +508,8 @@ const hojas = [
         bullets:[
           {tag:'jurisdiccion', text:'1774-75: Real Cédula de reorganización de pueblos de indios.'},
           {tag:'jurisdiccion', text:'El fiscal Moreno y Escandón <b>decreta la extinción del pueblo</b> de Serrezuela por despoblamiento.'},
+          {tag:'localizacion', text:'1789: se construye el <b>Puente de los Españoles</b> (arquitecto Domingo Esquiaquí) sobre el camino de Occidente.'},
+          {tag:'jurisdiccion', text:'1831: el general José Hilario López establece su <b>cuartel general</b> en el territorio.'},
           {tag:'jurisdiccion', text:'1837: división del resguardo, ya en la República.'},
           {tag:'productivo', text:'Se consolida la <b>gran propiedad hacendataria</b> — el mismo patrón que dos siglos después habilita la escala industrial de la floricultura.'}
         ],
@@ -499,13 +517,16 @@ const hojas = [
       },
       {
         id:'p4', type:'milestone', top: 10, left: 54,
-        date:'1875 – 1976', label:'Nombres en disputa',
-        summary:'Cuatro cambios de nombre en un siglo',
+        date:'1857 – 1991', label:'Nombres y jurisdicción en disputa',
+        summary:'Cuatro cambios de nombre, y un lugar sin provincia propia',
         bullets:[
           {tag:'toponimia', text:'<b>1875:</b> Madrid (Ley 14, en memoria de Pedro Fernández Madrid).'},
           {tag:'toponimia', text:'<b>1920:</b> vuelve Serrezuela (Ley 5, nombres históricos).'},
           {tag:'toponimia', text:'<b>1973:</b> Serrezuela otra vez, por petición vecinal.'},
-          {tag:'toponimia', text:'<b>1976:</b> Madrid definitivo (Decreto 14).'}
+          {tag:'toponimia', text:'<b>1976:</b> Madrid definitivo (Decreto 14).'},
+          {tag:'productivo', text:'Finales del s. XIX: dos industrias prósperas — el <b>Molino de Trigo</b> de Julián Escallón y la <b>Cervecería</b> de Antonio B. Cuervo.'},
+          {tag:'jurisdiccion', text:'Bajo el Estado Soberano de Cundinamarca, el territorio queda agrupado en el "Segundo Departamento de Bogotá"; la Ley 46 de 1905 crea temporalmente la Provincia de Funza, antecedente directo.'},
+          {tag:'jurisdiccion', text:'La <b>Provincia de Sabana Occidente</b> como tal solo se constituye formalmente después de la Constitución de 1991 — casi 120 años después del primer cambio de nombre.'}
         ],
         media:'Actas de renombramiento — pendiente'
       }
@@ -520,6 +541,7 @@ const hojas = [
         summary:'De escuela de agronomía a base aérea',
         bullets:[
           {tag:'productivo', text:'1924: <b>Escuela Militar de Aviación</b> (hoy CAMAN), sobre los predios de la antigua Escuela de Agronomía.'},
+          {tag:'productivo', text:'Madrid tuvo la primera empresa de aviación de carga del país, <b>TACA</b>, antes de que el predio pasara a la Fuerza Aérea.'},
           {tag:'sociocultural', text:'1928: aterrizaje de <b>Charles Lindbergh</b>, recibido por más de 10.000 personas.'},
           {tag:'jurisdiccion', text:'1955: Base Arsenal · hacia 1960: Comando Aéreo de Mantenimiento.'},
           {tag:'jurisdiccion', text:'2000 / 2006: PBOT municipal (Acuerdo 024 → 017).'}
@@ -591,7 +613,7 @@ const flatNodes = []; // { el, drawer, id, type } en orden cronológico
 
 hojas.forEach((hoja, hi) => {
   const hojaEl = document.createElement('div');
-  hojaEl.className = 'hoja ' + (hi % 2 === 0 ? 'jag-a' : 'jag-b');
+  hojaEl.className = 'hoja';
 
   const tab = document.createElement('div');
   tab.className = 'hoja-tab';
