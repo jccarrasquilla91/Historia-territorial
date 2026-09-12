@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Madrid, Cundinamarca — línea de tiempo territorial</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#F6F1E4;
@@ -21,6 +19,8 @@
     --teal:#2f8fae;
     --olive:#a3791f;
     --shadow: rgba(28,28,28,0.18);
+    --font-title: 'Arial Black', 'Arial Bold', Gotham, Arial, sans-serif;
+    --font-body: Arial, Helvetica, sans-serif;
   }
 
   *{box-sizing:border-box;}
@@ -31,7 +31,7 @@
     background-image:
       radial-gradient(circle at 20% 20%, rgba(0,0,0,0.02) 0, transparent 40%),
       radial-gradient(circle at 80% 60%, rgba(0,0,0,0.02) 0, transparent 40%);
-    font-family:'Work Sans', sans-serif;
+    font-family:var(--font-body);
     color:var(--ink);
   }
 
@@ -42,16 +42,18 @@
     padding:56px 28px 24px;
   }
   .eyebrow{
-    font-family:'Kalam', cursive;
-    font-size:19px;
+    font-family:var(--font-body);
+    font-weight:700;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    font-size:14px;
     color:var(--red);
-    transform:rotate(-1deg);
     display:inline-block;
     margin-bottom:6px;
   }
   h1{
-    font-family:'Kalam', cursive;
-    font-weight:700;
+    font-family:var(--font-title);
+    font-weight:900;
     font-size:clamp(34px,5vw,54px);
     line-height:1.05;
     margin:0 0 14px;
@@ -65,14 +67,29 @@
     margin:0 0 8px;
   }
   .howto{
-    font-size:14px;
-    color:#6b6b5f;
-    font-style:italic;
-    margin-top:18px;
+    font-family:var(--font-body);
+    font-size:16px;
+    font-weight:600;
+    color:#5a3d10;
+    font-style:normal;
+    line-height:1.5;
+    margin-top:20px;
+    max-width:640px;
+    background:#FBEBCF;
+    border-radius:6px;
+    padding:14px 18px;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .howto .howto-icon{
+    font-size:22px;
+    line-height:1;
+    flex:none;
   }
   #restart-btn{
     margin-top:14px;
-    font-family:'Work Sans', sans-serif;
+    font-family:var(--font-body);
     font-size:13px;
     font-weight:600;
     color:var(--navy);
@@ -128,7 +145,7 @@
     width:420px;
     flex:none;
     background:var(--paper);
-    margin:0 -1px;
+    margin:0 10px;
     padding:34px 26px 28px;
     box-shadow: 2px 0 6px var(--shadow);
   }
@@ -138,15 +155,14 @@
   /* esquinas redondeadas, sin recorte irregular (evita cortar texto) */
   .hoja{ border-radius: 14px; }
 
-  .hoja + .hoja{ border-left: 3px solid var(--ink); }
-
   .hoja-tab{
     position:absolute;
     top:-16px; right:18px;
     background:var(--ink);
     color:var(--paper);
-    font-family:'Kalam', cursive;
-    font-size:14px;
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:13px;
     padding:6px 14px 5px;
     border-radius:3px 3px 0 0;
     user-select:none;
@@ -154,7 +170,8 @@
   }
 
   .hoja-title{
-    font-family:'Kalam', cursive;
+    font-family:var(--font-title);
+    font-weight:900;
     font-size:22px;
     color:var(--navy);
     margin:6px 0 18px;
@@ -163,11 +180,11 @@
   /* ---------- Spine (wave of nodes) ---------- */
   .spine{
     position:relative;
-    height:400px;
+    height:520px;
   }
   .node{
     position:absolute;
-    width:160px;
+    width:190px;
     display:flex;
     flex-direction:column;
     align-items:flex-start;
@@ -176,8 +193,6 @@
   .dot{
     width:22px;height:22px;border-radius:50%;
     background:var(--red);
-    border:3px solid var(--paper);
-    box-shadow:0 0 0 2px var(--red);
     margin-bottom:8px;
     transition:transform .18s ease;
     flex:none;
@@ -185,12 +200,12 @@
   .node:hover .dot{ transform:scale(1.18); }
   .node.open .dot{ background:var(--red-dark); }
 
-  .node.milestone .dot{ border-radius:4px; transform:rotate(45deg); background:var(--purple); box-shadow:0 0 0 2px var(--purple); }
+  .node.milestone .dot{ border-radius:4px; transform:rotate(45deg); background:var(--purple); }
   .node.milestone:hover .dot{ transform:rotate(45deg) scale(1.18); }
   .node.finale .dot{
-    background:var(--olive); box-shadow:0 0 0 2px var(--olive);
+    background:var(--olive);
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-    border-radius:0; border:none; width:26px;height:26px;
+    border-radius:0; width:26px;height:26px;
   }
 
   /* ---- Estados del recorrido secuencial ---- */
@@ -199,13 +214,13 @@
   .node.active .dot{ animation: pulse 1.3s ease-in-out infinite; cursor:pointer; }
   .node.active, .node.revealed{ pointer-events:auto; }
   @keyframes pulse{
-    0%, 100%{ box-shadow:0 0 0 2px var(--red); }
-    50%{ box-shadow:0 0 0 7px rgba(200,55,42,.28); }
+    0%, 100%{ transform:scale(1); opacity:1; }
+    50%{ transform:scale(1.35); opacity:.65; }
   }
   .node.milestone.active .dot{ animation: pulse-m 1.3s ease-in-out infinite; }
   @keyframes pulse-m{
-    0%, 100%{ box-shadow:0 0 0 2px var(--purple); }
-    50%{ box-shadow:0 0 0 7px rgba(138,63,156,.28); }
+    0%, 100%{ transform:rotate(45deg) scale(1); opacity:1; }
+    50%{ transform:rotate(45deg) scale(1.35); opacity:.65; }
   }
 
   .date-tag, .orange-label, .blob, .summary-line, .read-more{
@@ -222,7 +237,7 @@
   }
 
   .date-tag{
-    font-family:'Kalam', cursive;
+    font-family:var(--font-body);
     font-size:13.5px;
     color:#333;
     margin-bottom:3px;
@@ -241,7 +256,7 @@
     font-style:italic;
     line-height:1.35;
     margin-top:6px;
-    max-width:150px;
+    max-width:175px;
   }
   .read-more{
     font-size:11px;
@@ -255,8 +270,7 @@
   .blob{
     width:56px; height:40px;
     margin-top:8px;
-    border:2.5px solid var(--green);
-    background:rgba(127,178,58,.10);
+    background:rgba(127,178,58,.38);
     overflow:hidden;
     border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
   }
@@ -289,7 +303,7 @@
     position:absolute; top:14px; right:16px;
     width:34px; height:34px;
     border:none; background:transparent;
-    font-family:'Kalam', cursive;
+    font-family:var(--font-body);
     font-size:22px;
     color:#777;
     cursor:pointer;
@@ -297,13 +311,14 @@
   }
   .modal-close:hover{ color:var(--red-dark); }
   .modal-date{
-    font-family:'Kalam', cursive;
+    font-family:var(--font-body);
     font-size:15px;
     color:#666;
     margin-bottom:2px;
   }
   .modal-card h4{
-    font-family:'Kalam', cursive;
+    font-family:var(--font-title);
+    font-weight:900;
     font-size:26px;
     color:var(--navy);
     margin:0 0 14px;
@@ -324,8 +339,8 @@
   .media-placeholder{
     flex:none;
     width:260px; height:180px;
-    border:2px solid var(--green);
-    background:repeating-linear-gradient(135deg, rgba(127,178,58,.10) 0 8px, transparent 8px 16px);
+    background-color:#E4EFD6;
+    background-image:repeating-linear-gradient(135deg, rgba(127,178,58,.22) 0 8px, transparent 8px 16px);
     display:flex; align-items:center; justify-content:center;
     text-align:center;
     font-size:11px;
@@ -381,7 +396,7 @@
     width:40px; height:40px;
     border:none; background:rgba(255,255,255,.12);
     color:#fff;
-    font-family:'Kalam', cursive;
+    font-family:var(--font-body);
     font-size:26px;
     border-radius:50%;
     cursor:pointer;
@@ -401,7 +416,8 @@
     padding:26px 28px;
   }
   .cierre-card h3{
-    font-family:'Kalam', cursive;
+    font-family:var(--font-title);
+    font-weight:900;
     font-size:22px;
     color:var(--olive);
     margin:0 0 10px;
@@ -440,7 +456,7 @@
   <span class="eyebrow">línea de tiempo territorial</span>
   <h1>Madrid, Cundinamarca</h1>
   <p>Configuración histórica y organización del espacio, del periodo Herrera al presente. Cada hoja de esta tira es un tramo del tiempo; el hilo rojo conecta los momentos; lo verde son fotos o mapas y lo naranja son notas cortas.</p>
-  <p class="howto">Toca el primer punto para empezar el recorrido: verás su título y un resumen, y el hilo avanza hasta el siguiente punto. Toca "leer más" en cualquier punto para abrir el detalle completo en una ventana.</p>
+  <p class="howto"><span class="howto-icon">👉</span><span>Toca el primer punto para empezar el recorrido: verás su título y un resumen, y el hilo avanza hasta el siguiente punto. Toca "leer más" en cualquier punto para abrir el detalle completo en una ventana.</span></p>
   <button id="restart-btn" type="button">↺ Reiniciar recorrido</button>
 
   <div class="legend">
@@ -594,7 +610,7 @@ const hojas = [
           {tag:'jurisdiccion', text:'1955: Base Arsenal · hacia 1960: Comando Aéreo de Mantenimiento.'},
           {tag:'jurisdiccion', text:'2000 / 2006: PBOT municipal (Acuerdo 024 → 017).'}
         ],
-        media: '<img src="img/MODERNO.JPG" alt="Modernidad" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">'
+        media: '<img src="img/MODERNO.jpg" alt="Modernidad" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">'
       },
       {
         id:'p6', type:'node', top: 12, left: 54,
@@ -606,7 +622,7 @@ const hojas = [
           {tag:'sociocultural', text:'Tradición silletera como símbolo de identidad campesina.'},
           {tag:'productivo', text:'<b>El problema:</b> expansión de invernaderos y presión creciente sobre el agua subterránea del corredor agroindustrial.'}
         ],
-        media: '<img src="img/INVERNADEROS.jpg" alt="Invernadero" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">'
+        media: '<img src="img/INVERNADERO.jpg" alt="Invernadero" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">'
       }
     ]
   },
@@ -638,7 +654,7 @@ const hojas = [
           {tag:'productivo', text:'Sin actividad productiva propia: comparte la floricultura y su "problema" de agua a escala municipal.'},
           {tag:'sociocultural', text:'<b>El vestigio:</b> luminarias con base en forma de cofre, vandalizadas con los años — la base-cofre es hoy el único rastro físico de la lucha original.'}
         ],
-        media: '<img src="img/ZOOM.jpeg" alt="Zoom barrio" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">'
+        media: '<img src="img/ZOOM.jpg" alt="Laguna de la Herrera" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">'
       },
       {
         id:'cierre', type:'finale', top: 62, left: 78,
