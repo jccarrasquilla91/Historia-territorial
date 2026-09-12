@@ -323,7 +323,7 @@
   .media-row{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; margin-top:6px; }
   .media-placeholder{
     flex:none;
-    width:190px; height:130px;
+    width:260px; height:180px;
     border:2px solid var(--green);
     background:repeating-linear-gradient(135deg, rgba(127,178,58,.10) 0 8px, transparent 8px 16px);
     display:flex; align-items:center; justify-content:center;
@@ -332,10 +332,61 @@
     color:#5a7a2e;
     padding:8px;
     border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
+    position:relative;
+  }
+  .media-placeholder.has-img{ cursor:zoom-in; }
+  .media-placeholder.has-img:hover img{ filter:brightness(0.85); }
+  .zoom-hint{
+    position:absolute;
+    bottom:10px; right:16px;
+    background:rgba(0,0,0,.55);
+    color:#fff;
+    font-size:15px;
+    width:26px; height:26px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .blob.has-img{ cursor:zoom-in; }
+  .media-error{
+    font-size:10.5px;
+    color:#8a3327;
+    line-height:1.4;
+    padding:4px;
+    word-break:break-word;
   }
   .note{
     font-size:12.5px; color:#6b6b5f; font-style:italic; flex:1; min-width:180px;
   }
+
+  /* ---------- Lightbox (imagen ampliada) ---------- */
+  .lightbox-backdrop{
+    position:fixed; inset:0;
+    background:rgba(10,8,5,.85);
+    display:flex; align-items:center; justify-content:center;
+    padding:30px;
+    z-index:80;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .lightbox-backdrop.open{ opacity:1; pointer-events:auto; }
+  .lightbox-backdrop img{
+    max-width:92vw; max-height:88vh;
+    object-fit:contain;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+    border-radius:4px;
+  }
+  .lightbox-close{
+    position:absolute; top:20px; right:26px;
+    width:40px; height:40px;
+    border:none; background:rgba(255,255,255,.12);
+    color:#fff;
+    font-family:'Kalam', cursive;
+    font-size:26px;
+    border-radius:50%;
+    cursor:pointer;
+  }
+  .lightbox-close:hover{ background:rgba(255,255,255,.25); }
 
   /* ---------- Footer / cierre banner ---------- */
   .cierre-banner{
@@ -415,6 +466,11 @@
     <ul id="modal-bullets"></ul>
     <div class="media-row" id="modal-media"></div>
   </div>
+</div>
+
+<div class="lightbox-backdrop" id="lightbox-backdrop">
+  <button class="lightbox-close" id="lightbox-close" aria-label="Cerrar imagen">×</button>
+  <img id="lightbox-img" src="" alt="">
 </div>
 
 <footer>
@@ -653,6 +709,7 @@ hojas.forEach((hoja, hi) => {
       const blob = document.createElement('div');
       blob.className = 'blob';
       blob.innerHTML = n.media;
+      wireMedia(blob);
       nodeEl.appendChild(blob);
     }
 
@@ -714,6 +771,38 @@ function resetTour(){
 document.getElementById('restart-btn').addEventListener('click', resetTour);
 
 /* ============================================================
+   MEDIA — conecta cada <img> insertada con el zoom y con un
+   aviso legible si el archivo no carga (ruta mal escrita,
+   mayúsculas/minúsculas distintas, o foto en formato HEIC de
+   iPhone sin convertir a jpg).
+   ============================================================ */
+function wireMedia(container){
+  const img = container.querySelector('img');
+  if(!img) return;
+
+  container.classList.add('has-img');
+
+  img.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openLightbox(img.src, img.alt);
+  });
+
+  const hint = document.createElement('div');
+  hint.className = 'zoom-hint';
+  hint.textContent = '🔍';
+  container.appendChild(hint);
+
+  img.addEventListener('error', () => {
+    container.classList.remove('has-img');
+    container.innerHTML = '';
+    const msg = document.createElement('div');
+    msg.className = 'media-error';
+    msg.innerHTML = 'No se pudo cargar<br><b>' + img.getAttribute('src') + '</b><br>revisa el nombre del archivo, mayúsculas y que no sea .HEIC';
+    container.appendChild(msg);
+  }, { once:true });
+}
+
+/* ============================================================
    MODAL — ventana con el detalle completo de un momento
    ============================================================ */
 const backdrop = document.getElementById('modal-backdrop');
@@ -756,6 +845,7 @@ function openModal(entry){
     const ph = document.createElement('div');
     ph.className = 'media-placeholder';
     ph.innerHTML = n.media;
+    wireMedia(ph);
     modalMedia.appendChild(ph);
     if(n.media.indexOf('<img') === -1){
       const note = document.createElement('div');
@@ -777,6 +867,27 @@ document.getElementById('modal-close').addEventListener('click', closeModal);
 backdrop.addEventListener('click', (e) => { if(e.target === backdrop) closeModal(); });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape' && backdrop.classList.contains('open')) closeModal();
+});
+
+/* ============================================================
+   LIGHTBOX — imagen ampliada a pantalla casi completa
+   ============================================================ */
+const lightbox = document.getElementById('lightbox-backdrop');
+const lightboxImg = document.getElementById('lightbox-img');
+
+function openLightbox(src, alt){
+  lightboxImg.src = src;
+  lightboxImg.alt = alt || '';
+  lightbox.classList.add('open');
+}
+function closeLightbox(){
+  lightbox.classList.remove('open');
+  lightboxImg.src = '';
+}
+document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
 });
 
 /* ============================================================
