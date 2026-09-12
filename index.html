@@ -274,6 +274,7 @@
     overflow:hidden;
     border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
   }
+  .blob-wrap{ position:relative; width:56px; margin-top:0; }
 
   /* ---------- Modal ---------- */
   .modal-backdrop{
@@ -402,6 +403,47 @@
     cursor:pointer;
   }
   .lightbox-close:hover{ background:rgba(255,255,255,.25); }
+  .lightbox-nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:52px; height:52px;
+    border:none; background:rgba(255,255,255,.12);
+    color:#fff;
+    font-size:32px;
+    line-height:1;
+    border-radius:50%;
+    cursor:pointer;
+    align-items:center; justify-content:center;
+    z-index:2;
+  }
+  .lightbox-nav:hover{ background:rgba(255,255,255,.25); }
+  .lightbox-prev{ left:20px; }
+  .lightbox-next{ right:20px; }
+  .lightbox-counter{
+    position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+    color:#fff; font-size:13px;
+    background:rgba(0,0,0,.4);
+    padding:4px 12px;
+    border-radius:12px;
+  }
+
+  /* ---------- Galería dentro del modal ---------- */
+  .media-gallery{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .media-count-badge{
+    position:absolute;
+    top:-6px; right:-6px;
+    background:var(--red);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    width:20px; height:20px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--paper);
+  }
 
   /* ---------- Footer / cierre banner ---------- */
   .cierre-banner{
@@ -486,7 +528,10 @@
 
 <div class="lightbox-backdrop" id="lightbox-backdrop">
   <button class="lightbox-close" id="lightbox-close" aria-label="Cerrar imagen">×</button>
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Foto anterior">‹</button>
   <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Foto siguiente">›</button>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
 </div>
 
 <footer>
@@ -725,11 +770,23 @@ hojas.forEach((hoja, hi) => {
     nodeEl.appendChild(summaryLine);
 
     if(n.media){
-      const blob = document.createElement('div');
-      blob.className = 'blob';
-      blob.innerHTML = n.media;
-      wireMedia(blob);
-      nodeEl.appendChild(blob);
+      const imgs = mediaArray(n.media);
+      if(imgs.length){
+        const wrap = document.createElement('div');
+        wrap.className = 'blob-wrap';
+        const blob = document.createElement('div');
+        blob.className = 'blob';
+        blob.innerHTML = imgs[0];
+        wireMedia(blob, imgs, 0);
+        wrap.appendChild(blob);
+        if(imgs.length > 1){
+          const badge = document.createElement('div');
+          badge.className = 'media-count-badge';
+          badge.textContent = '+' + (imgs.length - 1);
+          wrap.appendChild(badge);
+        }
+        nodeEl.appendChild(wrap);
+      }
     }
 
     const readMore = document.createElement('div');
@@ -795,7 +852,18 @@ document.getElementById('restart-btn').addEventListener('click', resetTour);
    mayúsculas/minúsculas distintas, o foto en formato HEIC de
    iPhone sin convertir a jpg).
    ============================================================ */
-function wireMedia(container){
+/* ============================================================
+   MEDIA — normaliza el campo "media" (una imagen o varias) y
+   conecta cada miniatura con el zoom y con un aviso legible si
+   el archivo no carga (ruta mal escrita, mayúsculas/minúsculas
+   distintas, o foto en formato HEIC de iPhone sin convertir a jpg).
+   ============================================================ */
+function mediaArray(media){
+  if(!media) return [];
+  return Array.isArray(media) ? media : [media];
+}
+
+function wireMedia(container, gallery, index){
   const img = container.querySelector('img');
   if(!img) return;
 
@@ -803,7 +871,7 @@ function wireMedia(container){
 
   img.addEventListener('click', (e) => {
     e.stopPropagation();
-    openLightbox(img.src, img.alt);
+    openLightbox(gallery && gallery.length ? gallery : [container.innerHTML], index || 0);
   });
 
   const hint = document.createElement('div');
@@ -860,13 +928,21 @@ function openModal(entry){
   });
 
   modalMedia.innerHTML = '';
-  if(n.media){
-    const ph = document.createElement('div');
-    ph.className = 'media-placeholder';
-    ph.innerHTML = n.media;
-    wireMedia(ph);
-    modalMedia.appendChild(ph);
-    if(n.media.indexOf('<img') === -1){
+  const imgs = mediaArray(n.media);
+  if(imgs.length){
+    const gallery = document.createElement('div');
+    gallery.className = 'media-gallery';
+    imgs.forEach((item, idx) => {
+      const ph = document.createElement('div');
+      ph.className = 'media-placeholder';
+      ph.innerHTML = item;
+      wireMedia(ph, imgs, idx);
+      gallery.appendChild(ph);
+    });
+    modalMedia.appendChild(gallery);
+
+    const hasRealImg = imgs.some(m => m.indexOf('<img') !== -1);
+    if(!hasRealImg){
       const note = document.createElement('div');
       note.className = 'note';
       note.textContent = 'Reemplaza este bloque por una foto, mapa o plano real editando la propiedad "media" en el arreglo de datos.';
@@ -889,15 +965,37 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================
-   LIGHTBOX — imagen ampliada a pantalla casi completa
+   LIGHTBOX — imagen ampliada a pantalla casi completa, con
+   flechas de navegación cuando el momento tiene varias fotos
    ============================================================ */
 const lightbox = document.getElementById('lightbox-backdrop');
 const lightboxImg = document.getElementById('lightbox-img');
+const lightboxPrev = document.getElementById('lightbox-prev');
+const lightboxNext = document.getElementById('lightbox-next');
+const lightboxCounter = document.getElementById('lightbox-counter');
+let lightboxSet = [];
+let lightboxIndex = 0;
 
-function openLightbox(src, alt){
-  lightboxImg.src = src;
-  lightboxImg.alt = alt || '';
+function openLightbox(gallery, startIndex){
+  lightboxSet = gallery;
+  lightboxIndex = startIndex || 0;
+  renderLightbox();
   lightbox.classList.add('open');
+}
+function renderLightbox(){
+  const tmp = document.createElement('div');
+  tmp.innerHTML = lightboxSet[lightboxIndex];
+  const img = tmp.querySelector('img');
+  lightboxImg.src = img ? img.src : '';
+  lightboxImg.alt = img ? img.alt : '';
+  const multi = lightboxSet.length > 1;
+  lightboxPrev.style.display = multi ? 'flex' : 'none';
+  lightboxNext.style.display = multi ? 'flex' : 'none';
+  lightboxCounter.textContent = multi ? (lightboxIndex+1) + ' / ' + lightboxSet.length : '';
+}
+function lightboxGo(delta){
+  lightboxIndex = (lightboxIndex + delta + lightboxSet.length) % lightboxSet.length;
+  renderLightbox();
 }
 function closeLightbox(){
   lightbox.classList.remove('open');
@@ -907,7 +1005,13 @@ document.getElementById('lightbox-close').addEventListener('click', closeLightbo
 lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+  if(lightbox.classList.contains('open')){
+    if(e.key === 'ArrowRight') lightboxGo(1);
+    if(e.key === 'ArrowLeft') lightboxGo(-1);
+  }
 });
+lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); lightboxGo(-1); });
+lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); lightboxGo(1); });
 
 /* ============================================================
    HILO — un <path> por tramo, para poder animarlo al llegar
