@@ -257,6 +257,7 @@
     margin-top:8px;
     border:2.5px solid var(--green);
     background:rgba(127,178,58,.10);
+    overflow:hidden;
     border-radius: 62% 38% 55% 45% / 45% 55% 45% 55%;
   }
 
@@ -651,6 +652,7 @@ hojas.forEach((hoja, hi) => {
     if(n.media){
       const blob = document.createElement('div');
       blob.className = 'blob';
+      blob.innerHTML = n.media;
       nodeEl.appendChild(blob);
     }
 
@@ -753,12 +755,14 @@ function openModal(entry){
   if(n.media){
     const ph = document.createElement('div');
     ph.className = 'media-placeholder';
-    ph.textContent = n.media;
+    ph.innerHTML = n.media;
     modalMedia.appendChild(ph);
-    const note = document.createElement('div');
-    note.className = 'note';
-    note.textContent = 'Reemplaza este bloque por una foto, mapa o plano real editando la propiedad "media" en el arreglo de datos.';
-    modalMedia.appendChild(note);
+    if(n.media.indexOf('<img') === -1){
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.textContent = 'Reemplaza este bloque por una foto, mapa o plano real editando la propiedad "media" en el arreglo de datos.';
+      modalMedia.appendChild(note);
+    }
   }
 
   backdrop.classList.add('open');
